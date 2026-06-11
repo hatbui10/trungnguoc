@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Số Tự Động - Logic Định Vị Chuẩn</title>
+    <title>Bảng Số Tự Động - Có Nút Undo</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -40,7 +40,7 @@
             padding: 12px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.8);
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             max-width: 100%;
             box-sizing: border-box;
         }
@@ -112,11 +112,13 @@
             border-color: #FF3333 !important;
         }
 
-        /* Khu vực nhập liệu */
+        /* Khu vực điều khiển và nhập liệu */
         .input-area {
             width: 100%;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
             padding: 0 15px;
             box-sizing: border-box;
         }
@@ -138,6 +140,24 @@
         input:focus {
             border-color: #00FF66;
             box-shadow: 0 0 12px rgba(0, 255, 102, 0.4);
+        }
+
+        /* Nút Undo thiết kế tối giản, hợp giao diện */
+        .btn-undo {
+            background-color: #262626;
+            color: #ffffff;
+            border: 1px solid #444;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: background-color 0.2s;
+        }
+
+        .btn-undo:active {
+            background-color: #444;
         }
     </style>
 </head>
@@ -166,6 +186,7 @@
 
     <div class="input-area">
         <input type="text" id="numberInput" pattern="[0-9]*" inputmode="numeric" placeholder="Gõ số tại đây..." autofocus maxlength="1">
+        <button class="btn-undo" id="undoBtn">Hoàn tác (Undo)</button>
     </div>
 
     <script>
@@ -174,6 +195,7 @@
 
         const inputEl = document.getElementById('numberInput');
         const predictBox = document.getElementById('predictionBox');
+        const undoBtn = document.getElementById('undoBtn');
         const sttCells = document.getElementById('rowSTT').children;
         const row1Cells = document.getElementById('row1').children;
         const row2Cells = document.getElementById('row2').children;
@@ -182,28 +204,10 @@
             inputEl.focus();
         });
 
-        inputEl.addEventListener('input', function() {
-            let value = inputEl.value.trim();
-
-            if (!/^\d$/.test(value)) {
-                inputEl.value = '';
-                return;
-            }
-
-            dataStorage.push({
-                stt: totalCount,
-                val: parseInt(value)
-            });
-
-            totalCount++; 
-
-            if (dataStorage.length > 20) {
-                dataStorage.shift(); 
-            }
-
+        // Hàm vẽ lại toàn bộ bảng dựa theo mảng dataStorage hiện có
+        function renderGrid() {
             clearGrid();
 
-            // Cập nhật giao diện bảng số
             for (let i = 0; i < dataStorage.length; i++) {
                 let reverseIndex = dataStorage.length - 1 - i;
                 let item = dataStorage[reverseIndex];
@@ -231,31 +235,67 @@
                 }
             }
 
-            // Chạy logic kiểm tra gợi ý dựa theo Cột 1 và Cột 2 từ trái qua
+            // Tính toán lại gợi ý sau khi bảng thay đổi dữ liệu
             checkPrediction();
+        }
 
+        // Sự kiện gõ số tự động nhập dịch chuyển
+        inputEl.addEventListener('input', function() {
+            let value = inputEl.value.trim();
+
+            if (!/^\d$/.test(value)) {
+                inputEl.value = '';
+                return;
+            }
+
+            dataStorage.push({
+                stt: totalCount,
+                val: parseInt(value)
+            });
+
+            totalCount++; 
+
+            if (dataStorage.length > 20) {
+                dataStorage.shift(); 
+            }
+
+            renderGrid();
             inputEl.value = '';
         });
 
-        function checkPrediction() {
-            // Lấy nội dung của Cột 1 (Chỉ số 0) và Cột 2 (Chỉ số 1) từ trái qua
-            let r1_c1 = row1Cells[0].textContent; // Hàng 1 cột 1
-            let r2_c1 = row2Cells[0].textContent; // Hàng 2 cột 1 (MỐC)
-            let r1_c2 = row1Cells[1].textContent; // Hàng 1 cột 2
-            let r2_c2 = row2Cells[1].textContent; // Hàng 2 cột 2
+        // Sự kiện click nút Undo (Hoàn tác)
+        undoBtn.addEventListener('click', function() {
+            if (dataStorage.length === 0) return;
 
-            // Đợi dữ liệu điền đủ vào 4 ô này
+            // Xóa phần tử cuối cùng vừa thêm vào mảng
+            dataStorage.pop();
+            
+            // Giảm bộ đếm STT tổng xuống 1 đơn vị
+            if (totalCount > 0) totalCount--;
+
+            // Vẽ lại bảng số và tính toán lại gợi ý
+            renderGrid();
+            
+            // Đưa con trỏ chuột quay lại ô nhập số để sẵn sàng gõ tiếp
+            inputEl.focus();
+        });
+
+        function checkPrediction() {
+            let r1_c1 = row1Cells[0].textContent; 
+            let r2_c1 = row2Cells[0].textContent; 
+            let r1_c2 = row1Cells[1].textContent; 
+            let r2_c2 = row2Cells[1].textContent; 
+
             if (r1_c1 === "" || r2_c1 === "" || r1_c2 === "" || r2_c2 === "") {
                 setPredictBox("Chờ...", "default");
                 return;
             }
 
             let n1_r1 = parseInt(r1_c1);
-            let n1_r2 = parseInt(r2_c1); // Mốc so sánh
+            let n1_r2 = parseInt(r2_c1); 
             let n2_r1 = parseInt(r1_c2);
             let n2_r2 = parseInt(r2_c2);
 
-            // Hàm kiểm tra tính chất ngược nhau (Lớn/Nhỏ đối lập)
             function isOpposite(a, b) {
                 return (a < 5 && b >= 5) || (a >= 5 && b < 5);
             }
@@ -263,26 +303,21 @@
             let col1Nguerk = isOpposite(n1_r1, n1_r2);
             let col2Nguerk = isOpposite(n2_r1, n2_r2);
 
-            // Xác định trạng thái của ô mốc (Hàng 2, Cột 1)
             let baseStatus = (n1_r2 < 5) ? "Nhỏ" : "Lớn";
 
-            // LOGIC QUY ĐỊNH GỢI Ý ĐÚNG THEO VỊ TRÍ
             if (col1Nguerk && col2Nguerk) {
-                // Cả 2 cột đều ngược -> TRÙNG tính chất ô mốc
                 if (baseStatus === "Nhỏ") {
                     setPredictBox("Gợi ý: Nhỏ", "green");
                 } else {
                     setPredictBox("Gợi ý: Lớn", "red");
                 }
             } else if ((col1Nguerk && !col2Nguerk) || (!col1Nguerk && col2Nguerk)) {
-                // Chỉ có 1 cột ngược -> NGƯỢC tính chất ô mốc
                 if (baseStatus === "Nhỏ") {
                     setPredictBox("Gợi ý: Lớn", "red");
                 } else {
                     setPredictBox("Gợi ý: Nhỏ", "green");
                 }
             } else {
-                // Cả 2 cột đều không ngược
                 setPredictBox("Chờ...", "default");
             }
         }
