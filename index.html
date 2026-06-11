@@ -3,35 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Số Tự Động - Có Nút Undo</title>
+    <title>Bảng Số Tự Động</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 15px;
+            /* Thêm padding-top lớn để bảng số không bị ô gợi ý (fixed) che mất */
+            padding-top: 80px; 
             background-color: #0A0A0A; 
             color: #ffffff;
             margin: 0;
         }
 
-        /* Ô gợi ý nằm trên cùng */
+        /* Ô GỢI Ý CỐ ĐỊNH TRÊN CÙNG - KHÔNG BỊ CHE KHI BẬT PHÍM */
         .prediction-box {
-            width: calc(100% - 24px);
-            max-width: 356px;
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
             padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            background-color: #1A1A1A;
-            border: 2px dashed #555;
             text-align: center;
             font-size: 18px;
             font-weight: bold;
             text-transform: uppercase;
             box-sizing: border-box;
             letter-spacing: 1px;
-            transition: all 0.2s ease;
+            z-index: 9999; /* Luôn nổi lên trên cùng mọi thành phần */
+            background-color: #1A1A1A;
+            border-bottom: 2px dashed #555;
+            border-radius: 0 0 12px 12px; /* Bo góc dưới cho đẹp */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         /* Hộp chứa bảng số */
@@ -56,14 +61,7 @@
             gap: 4px; 
         }
 
-        /* Hàng STT nổi màu Tím Đậm */
-        .row-stt {
-            position: sticky;
-            top: 5px;
-            z-index: 10;
-            margin-bottom: 6px; 
-        }
-
+        /* Hàng STT */
         .row-stt .cell {
             background-color: #1A0044;
             color: #E0AAFF; 
@@ -71,7 +69,7 @@
             border: 1px solid #3A0088;
         }
 
-        /* Ô tiêu chuẩn để thẳng hàng tuyệt đối */
+        /* Ô tiêu chuẩn */
         .cell {
             width: 32px;
             height: 32px;
@@ -93,13 +91,14 @@
             .row { gap: 3px; }
             .cell { width: 28px; height: 28px; font-size: 12px; }
             .prediction-box { font-size: 16px; padding: 12px; }
+            body { padding-top: 70px; }
         }
 
         .row-1 .cell {
             background-color: #161616;
         }
 
-        /* MÀU NỀN CÁC Ô TƯƠNG PHẢN CAO */
+        /* MÀU NỀN CÁC Ô */
         .bg-green {
             background-color: #00FF66 !important; 
             color: #000000 !important;
@@ -142,7 +141,6 @@
             box-shadow: 0 0 12px rgba(0, 255, 102, 0.4);
         }
 
-        /* Nút Undo thiết kế tối giản, hợp giao diện */
         .btn-undo {
             background-color: #262626;
             color: #ffffff;
@@ -204,7 +202,6 @@
             inputEl.focus();
         });
 
-        // Hàm vẽ lại toàn bộ bảng dựa theo mảng dataStorage hiện có
         function renderGrid() {
             clearGrid();
 
@@ -235,11 +232,9 @@
                 }
             }
 
-            // Tính toán lại gợi ý sau khi bảng thay đổi dữ liệu
             checkPrediction();
         }
 
-        // Sự kiện gõ số tự động nhập dịch chuyển
         inputEl.addEventListener('input', function() {
             let value = inputEl.value.trim();
 
@@ -263,62 +258,67 @@
             inputEl.value = '';
         });
 
-        // Sự kiện click nút Undo (Hoàn tác)
         undoBtn.addEventListener('click', function() {
             if (dataStorage.length === 0) return;
-
-            // Xóa phần tử cuối cùng vừa thêm vào mảng
             dataStorage.pop();
-            
-            // Giảm bộ đếm STT tổng xuống 1 đơn vị
             if (totalCount > 0) totalCount--;
-
-            // Vẽ lại bảng số và tính toán lại gợi ý
             renderGrid();
-            
-            // Đưa con trỏ chuột quay lại ô nhập số để sẵn sàng gõ tiếp
             inputEl.focus();
         });
 
         function checkPrediction() {
-            let r1_c1 = row1Cells[0].textContent; 
-            let r2_c1 = row2Cells[0].textContent; 
-            let r1_c2 = row1Cells[1].textContent; 
-            let r2_c2 = row2Cells[1].textContent; 
+            let idx11 = -1, idx19 = -1, idx20 = -1;
 
-            if (r1_c1 === "" || r2_c1 === "" || r1_c2 === "" || r2_c2 === "") {
+            for (let i = 0; i < 10; i++) {
+                let sttTxt = sttCells[i].textContent.trim();
+                if (sttTxt === "11") idx11 = i;
+                if (sttTxt === "19") idx19 = i;
+                if (sttTxt === "20") idx20 = i;
+            }
+
+            if (idx11 === -1 || idx19 === -1 || idx20 === -1) {
                 setPredictBox("Chờ...", "default");
                 return;
             }
 
-            let n1_r1 = parseInt(r1_c1);
-            let n1_r2 = parseInt(r2_c1); 
-            let n2_r1 = parseInt(r1_c2);
-            let n2_r2 = parseInt(r2_c2);
+            let val11_r2 = row2Cells[idx11].textContent; 
+            let val19_r1 = row1Cells[idx19].textContent;
+            let val19_r2 = row2Cells[idx19].textContent;
+            let val20_r1 = row1Cells[idx20].textContent;
+            let val20_r2 = row2Cells[idx20].textContent;
 
-            function isOpposite(a, b) {
+            if (val11_r2 === "" || val19_r1 === "" || val19_r2 === "" || val20_r1 === "" || val20_r2 === "") {
+                setPredictBox("Chờ...", "default");
+                return;
+            }
+
+            let n_base = parseInt(val11_r2);
+            let n19_r1 = parseInt(val19_r1);
+            let n19_r2 = parseInt(val19_r2);
+            let n20_r1 = parseInt(val20_r1);
+            let n20_r2 = parseInt(val20_r2);
+
+            function isColumnDifferentColor(a, b) {
                 return (a < 5 && b >= 5) || (a >= 5 && b < 5);
             }
 
-            let col1Nguerk = isOpposite(n1_r1, n1_r2);
-            let col2Nguerk = isOpposite(n2_r1, n2_r2);
+            let col19IsDifferent = isColumnDifferentColor(n19_r1, n19_r2); 
+            let col20IsDifferent = isColumnDifferentColor(n20_r1, n20_r2); 
 
-            let baseStatus = (n1_r2 < 5) ? "Nhỏ" : "Lớn";
+            let baseStatus = (n_base < 5) ? "Nhỏ" : "Lớn";
 
-            if (col1Nguerk && col2Nguerk) {
+            if (col19IsDifferent && col20IsDifferent) {
                 if (baseStatus === "Nhỏ") {
                     setPredictBox("Gợi ý: Nhỏ", "green");
                 } else {
                     setPredictBox("Gợi ý: Lớn", "red");
-                }
-            } else if ((col1Nguerk && !col2Nguerk) || (!col1Nguerk && col2Nguerk)) {
-                if (baseStatus === "Nhỏ") {
-                    setPredictBox("Gợi ý: Lớn", "red");
-                } else {
-                    setPredictBox("Gợi ý: Nhỏ", "green");
                 }
             } else {
-                setPredictBox("Chờ...", "default");
+                if (baseStatus === "Nhỏ") {
+                    setPredictBox("Gợi ý: Lớn", "red");
+                } else {
+                    setPredictBox("Gợi ý: Nhỏ", "green");
+                }
             }
         }
 
@@ -328,14 +328,14 @@
             
             if (status === "green") {
                 predictBox.classList.add("bg-green");
-                predictBox.style.border = "2px solid #00FF66";
+                predictBox.style.borderBottom = "2px solid #00FF66";
             } else if (status === "red") {
                 predictBox.classList.add("bg-red");
-                predictBox.style.border = "2px solid #FF3333";
+                predictBox.style.borderBottom = "2px solid #FF3333";
             } else {
                 predictBox.style.backgroundColor = "#1A1A1A";
                 predictBox.style.color = "#ffffff";
-                predictBox.style.border = "2px dashed #555";
+                predictBox.style.borderBottom = "2px dashed #555";
             }
         }
 
