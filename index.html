@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Số Tự Động</title>
+    <title>Bảng Số Tự Động </title>
     <style>
         body {
             font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            /* Thêm padding-top lớn để bảng số không bị ô gợi ý (fixed) che mất */
             padding-top: 80px; 
             background-color: #0A0A0A; 
             color: #ffffff;
             margin: 0;
         }
 
-        /* Ô GỢI Ý CỐ ĐỊNH TRÊN CÙNG - KHÔNG BỊ CHE KHI BẬT PHÍM */
+        /* Ô gợi ý cố định trên cùng */
         .prediction-box {
             position: fixed;
-            top: 20px;
+            top: 0;
             left: 50%;
             transform: translateX(-50%);
-            width: 70%;
+            width: 100%;
             max-width: 400px;
             padding: 15px;
             text-align: center;
@@ -32,11 +31,12 @@
             text-transform: uppercase;
             box-sizing: border-box;
             letter-spacing: 1px;
-            z-index: 9999; /* Luôn nổi lên trên cùng mọi thành phần */
+            z-index: 9999;
             background-color: #1A1A1A;
             border-bottom: 2px dashed #555;
-            border-radius: 0 0 12px 12px; /* Bo góc dưới cho đẹp */
+            border-radius: 0 0 12px 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
         }
 
         /* Hộp chứa bảng số */
@@ -61,7 +61,6 @@
             gap: 4px; 
         }
 
-        /* Hàng STT */
         .row-stt .cell {
             background-color: #1A0044;
             color: #E0AAFF; 
@@ -69,7 +68,6 @@
             border: 1px solid #3A0088;
         }
 
-        /* Ô tiêu chuẩn */
         .cell {
             width: 32px;
             height: 32px;
@@ -98,7 +96,6 @@
             background-color: #161616;
         }
 
-        /* MÀU NỀN CÁC Ô */
         .bg-green {
             background-color: #00FF66 !important; 
             color: #000000 !important;
@@ -111,7 +108,6 @@
             border-color: #FF3333 !important;
         }
 
-        /* Khu vực điều khiển và nhập liệu */
         .input-area {
             width: 100%;
             display: flex;
@@ -267,53 +263,51 @@
         });
 
         function checkPrediction() {
-            let idx11 = -1, idx19 = -1, idx20 = -1;
+            // SỬA ĐỔI QUAN TRỌNG: Lấy trực tiếp theo vị trí vật lý trên màn hình hiển thị
+            // Ô đầu tiên bên TRÁI giao diện luôn là chỉ số [0]
+            let valLeft_r2 = row2Cells[0].textContent; 
 
-            for (let i = 0; i < 10; i++) {
-                let sttTxt = sttCells[i].textContent.trim();
-                if (sttTxt === "11") idx11 = i;
-                if (sttTxt === "19") idx19 = i;
-                if (sttTxt === "20") idx20 = i;
-            }
+            // Hai cột cuối cùng bên PHẢI giao diện luôn là chỉ số [8] (cột sát cuối) và [9] (cột cuối cùng)
+            let valC8_r1 = row1Cells[8].textContent; 
+            let valC8_r2 = row2Cells[8].textContent; 
+            
+            let valC9_r1 = row1Cells[9].textContent; 
+            let valC9_r2 = row2Cells[9].textContent; 
 
-            if (idx11 === -1 || idx19 === -1 || idx20 === -1) {
+            // Kiểm tra xem bảng đã điền đủ dữ liệu đến các vị trí này chưa
+            if (valLeft_r2 === "" || valC8_r1 === "" || valC8_r2 === "" || valC9_r1 === "" || valC9_r2 === "") {
                 setPredictBox("Chờ...", "default");
                 return;
             }
 
-            let val11_r2 = row2Cells[idx11].textContent; 
-            let val19_r1 = row1Cells[idx19].textContent;
-            let val19_r2 = row2Cells[idx19].textContent;
-            let val20_r1 = row1Cells[idx20].textContent;
-            let val20_r2 = row2Cells[idx20].textContent;
+            let n_base = parseInt(valLeft_r2);
+            let n8_r1 = parseInt(valC8_r1);
+            let n8_r2 = parseInt(valC8_r2);
+            let n9_r1 = parseInt(valC9_r1);
+            let n9_r2 = parseInt(valC9_r2);
 
-            if (val11_r2 === "" || val19_r1 === "" || val19_r2 === "" || val20_r1 === "" || val20_r2 === "") {
-                setPredictBox("Chờ...", "default");
-                return;
-            }
-
-            let n_base = parseInt(val11_r2);
-            let n19_r1 = parseInt(val19_r1);
-            let n19_r2 = parseInt(val19_r2);
-            let n20_r1 = parseInt(val20_r1);
-            let n20_r2 = parseInt(val20_r2);
-
+            // Hàm kiểm tra tính chất ngược màu trong cùng một cột
             function isColumnDifferentColor(a, b) {
                 return (a < 5 && b >= 5) || (a >= 5 && b < 5);
             }
 
-            let col19IsDifferent = isColumnDifferentColor(n19_r1, n19_r2); 
-            let col20IsDifferent = isColumnDifferentColor(n20_r1, n20_r2); 
+            let col8IsDifferent = isColumnDifferentColor(n8_r1, n8_r2); // Cột kế cuối bên phải ngược màu
+            let col9IsDifferent = isColumnDifferentColor(n9_r1, n9_r2); // Cột cuối cùng bên phải ngược màu
 
+            // Tính chất thực tế (Lớn/Nhỏ) của ô mốc đầu tiên hàng 2 bên trái
             let baseStatus = (n_base < 5) ? "Nhỏ" : "Lớn";
 
-            if (col19IsDifferent && col20IsDifferent) {
+            // THỰC THI LOGIC:
+            // Nếu cả 2 cột bên phải đều ngược màu -> Gợi ý TRÙNG tính chất với ô hàng 2 ngoài cùng bên trái
+            if (col8IsDifferent && col9IsDifferent) {
                 if (baseStatus === "Nhỏ") {
                     setPredictBox("Gợi ý: Nhỏ", "green");
                 } else {
                     setPredictBox("Gợi ý: Lớn", "red");
                 }
-            } else {
+            } 
+            // Ngược lại -> Gợi ý NGƯỢC LẠI tính chất với ô đó
+            else {
                 if (baseStatus === "Nhỏ") {
                     setPredictBox("Gợi ý: Lớn", "red");
                 } else {
