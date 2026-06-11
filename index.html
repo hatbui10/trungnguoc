@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảng Số Tự Động </title>
+    <title>Bảng Số Tự Động - Sửa Lỗi Chỉ Số Ô</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -263,18 +263,19 @@
         });
 
         function checkPrediction() {
-            // SỬA ĐỔI QUAN TRỌNG: Lấy trực tiếp theo vị trí vật lý trên màn hình hiển thị
-            // Ô đầu tiên bên TRÁI giao diện luôn là chỉ số [0]
+            // ĐÃ SỬA CHÍNH XÁC CHỈ SỐ Ô THEO QUY TẮC MẢNG (0 ĐẾN 9)
+            // Ô đầu tiên ngoài cùng bên TRÁI giao diện (Hàng 2)
             let valLeft_r2 = row2Cells[0].textContent; 
 
-            // Hai cột cuối cùng bên PHẢI giao diện luôn là chỉ số [8] (cột sát cuối) và [9] (cột cuối cùng)
-            let valC8_r1 = row1Cells[8].textContent; 
-            let valC8_r2 = row2Cells[8].textContent; 
+            // Cột số 8 (Chỉ số mảng là 7)
+            let valC8_r1 = row1Cells[7].textContent; 
+            let valC8_r2 = row2Cells[7].textContent; 
             
-            let valC9_r1 = row1Cells[9].textContent; 
-            let valC9_r2 = row2Cells[9].textContent; 
+            // Cột số 9 (Chỉ số mảng là 8)
+            let valC9_r1 = row1Cells[8].textContent; 
+            let valC9_r2 = row2Cells[8].textContent; 
 
-            // Kiểm tra xem bảng đã điền đủ dữ liệu đến các vị trí này chưa
+            // Kiểm tra xem các ô vị trí này đã xuất hiện chữ số chưa
             if (valLeft_r2 === "" || valC8_r1 === "" || valC8_r2 === "" || valC9_r1 === "" || valC9_r2 === "") {
                 setPredictBox("Chờ...", "default");
                 return;
@@ -291,10 +292,10 @@
                 return (a < 5 && b >= 5) || (a >= 5 && b < 5);
             }
 
-            let col8IsDifferent = isColumnDifferentColor(n8_r1, n8_r2); // Cột kế cuối bên phải ngược màu
-            let col9IsDifferent = isColumnDifferentColor(n9_r1, n9_r2); // Cột cuối cùng bên phải ngược màu
+            let col8IsDifferent = isColumnDifferentColor(n8_r1, n8_r2); // Cột kế cuối ngược màu
+            let col9IsDifferent = isColumnDifferentColor(n9_r1, n9_r2); // Cột cuối cùng ngược màu
 
-            // Tính chất thực tế (Lớn/Nhỏ) của ô mốc đầu tiên hàng 2 bên trái
+            // Xác định tính chất thực tế (Lớn/Nhỏ) của ô mốc đầu tiên hàng 2 bên trái
             let baseStatus = (n_base < 5) ? "Nhỏ" : "Lớn";
 
             // THỰC THI LOGIC:
